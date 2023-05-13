@@ -1,5 +1,5 @@
 import django
-from serviceAirline.models import Flights, Cities,Airports,Reservations,SeatClass,Seats,Bookings,Passengers
+from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers
 import json
 import datetime
 import random
@@ -46,10 +46,12 @@ def make_small():
                     status = "A"
                 if row in businessClass:
                     seatClass = "Business Class"
+                    seatPrice = (timehours[i]*100)+50
                 else:
                     seatClass = "Economy Class"
+                    seatPrice = (timehours[i]*50)
                 seat = Seats.objects.create(FlightID=flight,Row=row,SeatNumber=column,
-                                            SeatStatus=status)
+                                            SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice)
 
 
     print("NICE")
