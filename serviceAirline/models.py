@@ -20,6 +20,12 @@ class Flights(models.Model):
     DestinationAirportID = models.ForeignKey(Airports,related_name="DestinationAirportID",on_delete=models.CASCADE)
     DepartureDateTime = models.DateTimeField(null=False)
     ArrivalDateTime = models.DateTimeField(null=False)
+    AvailibleSeats = models.IntegerField(null=True)
+    def updateAvailibleSeats(self):
+        availible = Seats.objects.filter(FlightID=self.pk).filter(SeatStatus="A").count()
+        self.AvailibleSeats = availible
+        self.save()
+        return availible
     def  __str__(self):
         return "{}: {}  TO {}: {}".format(self.DepartureAirportID.AirportName,self.DepartureDateTime,
                                           self.DestinationAirportID.AirportName,self.ArrivalDateTime)
@@ -45,8 +51,8 @@ class Seats(models.Model):
     SeatNumber = models.IntegerField()
     SeatStatus = models.CharField(max_length=10,choices=SEAT_STATUS_CHOICES)
     ReservationID = models.ForeignKey(Reservations,null=True ,on_delete=models.SET_NULL)
-    ClassID = models.CharField(max_length=20)
-    SeatPrice = models.IntegerField(null=False)
+    ClassID = models.ForeignKey(SeatClass,related_name="ClassID",on_delete=models.CASCADE)
+    SeatPrice = models.DecimalField(max_digits=10,decimal_places=2,null=False)
     class Meta:
         constraints = [
             models.UniqueConstraint(

@@ -1,5 +1,5 @@
 import django
-from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers
+from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers,SeatClass
 import json
 import datetime
 import random
@@ -25,8 +25,13 @@ def make_small():
     airport = ["BRU","GLA","PAR","DUS","FLR","BER"]
     rowChar = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
                'P','Q','R','S','T','U','V','W','X','Y','Z']
-    businessClass = ["A","B","C","D","E"]
+    firstClass = ["A","B","C","D","E"]
+    businessClass =['F','G','H','I','J','K']
     timehours = [1,4,3]
+
+    first = SeatClass.objects.create(Class="First Class")
+    business = SeatClass.objects.create(Class="Business Class")
+    economy = SeatClass.objects.create(Class="Economy")
     for i in range (3):
         cfrom = Cities.objects.create(CityName = city[i])
         afrom = Airports.objects.create(AirportName = airport[i],CityID=cfrom)
@@ -44,11 +49,14 @@ def make_small():
                     status = "R"
                 else:
                     status = "A"
-                if row in businessClass:
-                    seatClass = "Business Class"
-                    seatPrice = (timehours[i]*100)+50
+                if row in firstClass:
+                    seatClass = first
+                    seatPrice = (timehours[i]*150)+50
+                elif row in businessClass:
+                    seatClass = business
+                    seatPrice = (timehours[i]*100)+20
                 else:
-                    seatClass = "Economy Class"
+                    seatClass = economy
                     seatPrice = (timehours[i]*50)
                 seat = Seats.objects.create(FlightID=flight,Row=row,SeatNumber=column,
                                             SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice)
