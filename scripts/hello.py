@@ -1,4 +1,5 @@
 import django
+from django.utils import timezone
 from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers,SeatClass
 import json
 import datetime
@@ -39,8 +40,9 @@ def make_small():
         cto = Cities.objects.create(CityName = city[i+3])
         ato = Airports.objects.create(AirportName = airport[i+3],CityID=cto)
         date = datetime.datetime(2023,8,1,12,4,5)
+        arrdate = date+datetime.timedelta(hours=timehours[i])
         flight = Flights.objects.create(DepartureAirportID = afrom,DestinationAirportID=ato,
-                                        DepartureDateTime =date,ArrivalDateTime=date+datetime.timedelta(hours=timehours[i]))
+                                        DepartureDateTime =date,ArrivalDateTime=arrdate,Currency="GBP")
         for row in rowChar:
             for column in range (6):
                 column+=1
@@ -59,7 +61,9 @@ def make_small():
                     seatClass = economy
                     seatPrice = (timehours[i]*50)
                 seat = Seats.objects.create(FlightID=flight,Row=row,SeatNumber=column,
-                                            SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice)
+                                            SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice,Currency="GBP")
+        flight.updateAvailibleSeats()
+        flight.updateDurationMins()
 
 
     print("NICE")

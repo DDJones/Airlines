@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers
-from .serializers import flightsSerial
+from .serializers import flightsSerial, seatFareSearial
 #import requests
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 import json
 from datetime import datetime
+from dateutil import parser
 # Create your views here.
 
 def flights(request):
@@ -19,7 +20,14 @@ def flights(request):
     if request.GET.get("arrivalAirport"):
         arrival = request.GET.get("arrivalAirport")
         flights = flights.filter(ArrivalAirportID__AirportName__contains=arrival)
-
+    if request.GET.get("departureDate"):
+        print("niceONE\n")
+        reqDate = request.GET.get("departureDate")
+        reqParsed = parser.parse(reqDate)
+        #print(dateti.month)
+        flights = flights.filter(DepartureDateTime__year=reqParsed.year,
+                                 DepartureDateTime__month=reqParsed.month,
+                                 DepartureDateTime__day=reqParsed.day)
     if request.GET.get("numPassengers"):
         reqNumber = int(request.GET.get("numPassengers"))
         for flight in flights:
@@ -29,13 +37,18 @@ def flights(request):
             if availible < reqNumber:
                 print("YES")
                 flights = flights.exclude(pk=flight.pk)
-        print("DONE")
         print(flights)
+    
     serializer = flightsSerial(flights, many=True)
     return JsonResponse(serializer.data,safe=False)
 
+def options(request,flightId):
+    flightSeats = Seats.objects.filter(FlightID=flightId,SeatStatus="A")
+    serializer = seatFareSearial(flightSeats,many=True)
+    return JsonResponse(serializer.data,safe=False)
 
-
+def hold(request,flightID):
+    print("NO")
 
 # def flights(request):
     # print(arrivalAirport)
