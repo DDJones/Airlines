@@ -6,7 +6,7 @@ import datetime
 import random
 def my_scheduled_job():
   now = datetime.datetime.now()
-  reservation = Reservations.objects.filter(ReservationDate__lt=now-datetime.timedelta(minutes=2))
+  reservation = Reservations.objects.filter(ReservationDate__lt=now-datetime.timedelta(minutes=15))
   for res in reservation:
     seats = Seats.objects.filter(ReservationID=res.pk)
     if seats[0].SeatStatus == "R":

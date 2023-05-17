@@ -6,13 +6,10 @@ import datetime
 import random
 
 def populate():
-    city = ["Brussels","Glasgow","Paris","Duesseldorf","Florence","Berlin"]
-    airport = ["BRU","GLA","PAR","DUS","FLR","BER"]
     rowChar = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
                'P','Q','R','S','T','U','V','W','X','Y','Z']
     firstClass = ["A","B","C","D","E"]
     businessClass =['F','G','H','I','J','K']
-    timehours = [1,4,3]
     airlines = ["Virgin","EasyJet","British Airways","United"]
     first = SeatClass.objects.create(Class="First Class")
     business = SeatClass.objects.create(Class="Business Class")

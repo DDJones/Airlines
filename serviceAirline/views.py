@@ -5,9 +5,16 @@ from .serializers import flightsSerial, seatFareSearial,passengersSearialJSON
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from rest_framework.exceptions import APIException
 import json
 from datetime import datetime
 from dateutil import parser
+
+class ServiceUnavailable(APIException):
+    status_code = 404
+    default_detail = 'No matches.'
+    default_code = 'service_unavailable'
+
 # Create your views here.
 @api_view(["GET"])
 def flights(request):
@@ -23,7 +30,6 @@ def flights(request):
     if request.GET.get("departureDate"):
         reqDate = request.GET.get("departureDate")
         reqParsed = parser.parse(reqDate)
-        #print(dateti.month)
         flights = flights.filter(DepartureDateTime__year=reqParsed.year,
                                  DepartureDateTime__month=reqParsed.month,
                                  DepartureDateTime__day=reqParsed.day)
@@ -31,10 +37,8 @@ def flights(request):
         reqNumber = int(request.GET.get("numPassengers"))
         for flight in flights:
             availible = flight.AvailibleSeats
-            print(flight.AvailibleSeats)
             if availible < reqNumber:
                 flights = flights.exclude(pk=flight.pk)
-        print(flights)
     
     serializer = flightsSerial(flights, many=True)
     return Response(serializer.data)
@@ -47,25 +51,22 @@ def options(request,flightId):
     
 @api_view(["GET"])
 def hold(request,flightId):
-    http_bad_response = HttpResponseBadRequest()
-    http_bad_response["Content-Type"]= "text/plain"
+    unavail = ServiceUnavailable()
     if request.GET.get("numPassengers"):
         numPassengers = int(request.GET.get("numPassengers"))
     else:
-        http_bad_response.reason_phrase= "numPassengers not specified"
-        return http_bad_response
+        unavail.default_detail("numPassengers not specified")
+        return Response(unavail)
     if request.GET.get("seatClassId"):
         seatClassId = int(request.GET.get("seatClassId"))
     else:
-        http_bad_response.reason_phrase = "seatClassId not specified"
-        return http_bad_response
+        unavail.default_detail("seatClassId not specified")
+        return Response(unavail)
     
     flightSeats = Seats.objects.filter(FlightID=flightId,SeatStatus="A",ClassID=seatClassId)
     if numPassengers > flightSeats.count():
-        failed = JsonResponse({"holdSuccessful":False})
-        failed.reason_phrase = "Not enough seats in this class"
-        failed.status_code = 404
-        return failed
+        unavail.default_detail("Not enough seats in this class")
+        return Response(unavail)
     else:
         reservation = Reservations.objects.create(ReservationDate=datetime.now())
         for seat in flightSeats[:numPassengers]:
@@ -81,20 +82,5 @@ def booking(request):
     #passnger = passengersSearial(data["passengerDetails"][0])
     #print(passnger)
     print(request.data["passengerDetails"][0])
-    
-    # if "flightDetails" in request.POST:
-    #     print("NICE")
-    # if request.POST.get("passengerDetails"):
-    #     passengerDetails = request.POST.get("passengerDetails")
-    #     print("GOOD\n")
-    #     print(passengerDetails[0])
-    # if request.GET.get("flightDetails"):
-    #     flightDetails = request.GET.get("flightDetails")
-    #     print("GOODNUMVER2\n")
-    #     print(flightDetails)
-    # if request.GET.get("seatClassId"):
-    #     seatClassId = request.GET.get("seatClassId")
-    #     print("GOODNUMVER2\n")
-    #     print(seatClassId   )
     return Response({"NICE":True})
 
