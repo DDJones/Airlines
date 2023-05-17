@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers
-from .serializers import flightsSerial, seatFareSearial,passengersSearial
+from .serializers import flightsSerial, seatFareSearial,passengersSearialJSON
 #import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -80,7 +80,8 @@ def booking(request):
     data = request.data
     #passnger = passengersSearial(data["passengerDetails"][0])
     #print(passnger)
-    print(request.data["passengerDetails"][0]["title"])
+    print(request.data["passengerDetails"][0])
+    
     # if "flightDetails" in request.POST:
     #     print("NICE")
     # if request.POST.get("passengerDetails"):

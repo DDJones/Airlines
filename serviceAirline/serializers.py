@@ -26,12 +26,14 @@ class seatFareSearial(serializers.ModelSerializer):
         fields =  ["seatClassId","className","price"]
 
 
-class passengersSearial(serializers.ModelSerializer):
-    title = serializers.CharField(required=True, allow_blank=False, max_length=8)
-
+class passengersSearialJSON(serializers.ModelSerializer):
+    #Title = serializers.CharField(source = "Title")
     class Meta:
+
         model = Passengers
-        fields = ["title"]
+        alieses= {"Title":"title"}
+        fields = ["Title"]
+    
 
 
 
