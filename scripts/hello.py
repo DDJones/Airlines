@@ -4,24 +4,8 @@ from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bo
 import json
 import datetime
 import random
-def hello():
-    f = open('Airline.json')
-    data = json.load(f)
-    idx = 0
-    unique = { each['flightId'] : each for each in data }.values()
-    print(len(unique))
-    for i in unique:
-        # if i["from_municipality"] == "0" or i["to_municipality"] == "0":
-        #     pass
-        # depcity = Cities.objects.create(CityName = i["from_municipality"])
-        # arrcity = Cities.objects.create(CityName = i["to_municipality"])
-        idx+=1
-        if idx==5:
-            break
-    f.close()
-    return()
 
-def make_small():
+def populate():
     city = ["Brussels","Glasgow","Paris","Duesseldorf","Florence","Berlin"]
     airport = ["BRU","GLA","PAR","DUS","FLR","BER"]
     rowChar = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
@@ -30,45 +14,73 @@ def make_small():
     businessClass =['F','G','H','I','J','K']
     timehours = [1,4,3]
     airlines = ["Virgin","EasyJet","British Airways","United"]
-
     first = SeatClass.objects.create(Class="First Class")
     business = SeatClass.objects.create(Class="Business Class")
     economy = SeatClass.objects.create(Class="Economy")
-    for i in range (3):
-        cfrom = Cities.objects.create(CityName = city[i])
-        afrom = Airports.objects.create(AirportName = airport[i],CityID=cfrom)
+    f = open('Airline.json')
+    data = json.load(f)
+    idx = 0
+    # unique = { each['flightId'] : each for each in data }.values()
+    # print(len(unique))
+    for i in data:
+        try:
+            if i["from_municipality"] == "0" or i["to_municipality"] == "0":
+                pass
+            try:
+                cityfromJSON = Cities.objects.get(CityName=str(i["from_municipality"]))
+            except Cities.DoesNotExist:
+                cityfromJSON = Cities.objects.create(CityName=str(i["from_municipality"]))
+            try:
+                citytoJSON = Cities.objects.get(CityName=str(i["to_municipality"]))
+            except Cities.DoesNotExist:
+                citytoJSON = Cities.objects.create(CityName=str(i["to_municipality"]))
+            
+            try:
+                airportfromJSON = Airports.objects.get(AirportName=str(i["from_airportcode"]))
+            except Airports.DoesNotExist:
+                airportfromJSON = Airports.objects.create(AirportName=str(i["from_airportcode"]),CityID=cityfromJSON)
+            try:
+                airporttoJSON = Airports.objects.get(AirportName=str(i["to_airportcode"]))
+            except Airports.DoesNotExist:
+                airporttoJSON = Airports.objects.create(AirportName=str(i["to_airportcode"]),CityID=citytoJSON)
+            
+            date = datetime.datetime.strptime(i["departureDateTime"],"%Y-%m-%d %H:%M:%S")
+            arrdate = datetime.datetime.strptime(i["arrivalDateTime"],"%Y-%m-%d %H:%M:%S")
+            duration = i["durationMins"]
 
-        cto = Cities.objects.create(CityName = city[i+3])
-        ato = Airports.objects.create(AirportName = airport[i+3],CityID=cto)
-        date = datetime.datetime(2023,8,1,12,4,5)
-        arrdate = date+datetime.timedelta(hours=timehours[i])
-        flight = Flights.objects.create(Airline=random.choice(airlines),DepartureAirportID = afrom,DestinationAirportID=ato,
-                                        DepartureDateTime =date,ArrivalDateTime=arrdate,Currency="GBP")
-        for row in rowChar:
-            for column in range (6):
-                column+=1
-                ran = random.randint(1,10)%3
-                if ran == 0:
-                    status = "R"
-                else:
-                    status = "A"
-                if row in firstClass:
-                    seatClass = first
-                    seatPrice = (timehours[i]*150)+50
-                elif row in businessClass:
-                    seatClass = business
-                    seatPrice = (timehours[i]*100)+20
-                else:
-                    seatClass = economy
-                    seatPrice = (timehours[i]*50)
-                seat = Seats.objects.create(FlightID=flight,Row=row,SeatNumber=column,
-                                            SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice,Currency="GBP")
-        flight.updateAvailibleSeats()
-        flight.updateDurationMins()
+            flight = Flights.objects.create(Airline=random.choice(airlines),DepartureAirportID = airportfromJSON,
+                                            DestinationAirportID=airporttoJSON,
+                                            DepartureDateTime =date,ArrivalDateTime=arrdate,Currency="GBP",
+                                            DurationMins=duration)
+            
+            for row in rowChar:
+                for column in range (6):
+                    column+=1
+                    ran = random.randint(1,10)%3
+                    if ran == 0:
+                        status = "R"
+                    else:
+                        status = "A"
+                    if row in firstClass:
+                        seatClass = first
+                        seatPrice = (duration*3)+50
+                    elif row in businessClass:
+                        seatClass = business
+                        seatPrice = (duration*2)+20
+                    else:
+                        seatClass = economy
+                        seatPrice = (duration*1)
+                    seat = Seats.objects.create(FlightID=flight,Row=row,SeatNumber=column,
+                                                SeatStatus=status,ClassID = seatClass,SeatPrice= seatPrice,Currency="GBP")
+            flight.updateAvailibleSeats()
+            
+        except KeyError:
+            pass
 
-
-    print("NICE")
+        idx+=1
+        print("\nIDX="+str(idx))
+    f.close()
 
 
 def run():
-    make_small()
+    populate()

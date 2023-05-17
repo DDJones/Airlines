@@ -49,4 +49,4 @@ def book():
     print(r.text)
 
 
-posting()
+flights()
