@@ -10,9 +10,11 @@ def my_scheduled_job():
   for res in reservation:
     seats = Seats.objects.filter(ReservationID=res.pk)
     if seats[0].SeatStatus == "R":
-      pass
+       pass
     elif seats[0].SeatStatus == "H":
-      for seat in seats:
-        seat.SeatStatus = "A"
-        seat.save()
+        for seat in seats:
+           seat.SeatStatus = "A"
+           seat.save()
+        res.delete()
+
       
