@@ -16,6 +16,7 @@ class Airports(models.Model):
         return "{}".format(self.AirportName)
 
 class Flights(models.Model):
+    Airline = models.CharField(max_length=20)
     DepartureAirportID = models.ForeignKey(Airports,related_name="DepartureAirportID",on_delete=models.CASCADE)
     DestinationAirportID = models.ForeignKey(Airports,related_name="DestinationAirportID",on_delete=models.CASCADE)
     DepartureDateTime = models.DateTimeField(null=False)
@@ -52,6 +53,7 @@ class SeatClass(models.Model):
 class Seats(models.Model):
     AVAILIBLE = "A"
     RESERVED = "R"
+    HOLD = "H"
     SEAT_STATUS_CHOICES=[(AVAILIBLE,"Availible"),(RESERVED,"Reserved")]
     FlightID = models.ForeignKey(Flights,on_delete=models.CASCADE)
     Row = models.CharField(max_length=2)
@@ -68,8 +70,11 @@ class Seats(models.Model):
             )
         ]
     def  __str__(self):
-        return "{}{}{}  Status: {}   Class: {}  Price: {}".format(self.FlightID,self.Row,self.SeatNumber,
+        return "{}{}{}  Status: {}   Class: {}  Price: {}".format(self.FlightID.pk,self.Row,self.SeatNumber,
                                                        self.SeatStatus,self.ClassID,self.SeatPrice)
+    def updateSeatStatus(self,status):
+        self.SeatStatus = status
+        self.save()
 
 class Bookings(models.Model):
     FlightID = models.ForeignKey(Flights,on_delete=models.CASCADE)

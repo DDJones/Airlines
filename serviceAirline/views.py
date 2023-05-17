@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from serviceAirline.models import Flights, Cities,Airports,Reservations,Seats,Bookings,Passengers
-from .serializers import flightsSerial, seatFareSearial
+from .serializers import flightsSerial, seatFareSearial,passengersSearial
 #import requests
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 import json
 from datetime import datetime
 from dateutil import parser
 # Create your views here.
-
+@api_view(["GET"])
 def flights(request):
     departure = None
     arrival = None
@@ -15,13 +17,10 @@ def flights(request):
     if request.GET.get("departureAirportID"):
         departure = request.GET.get("departureAirportID")
         flights = flights.filter(DepartureAirportID__AirportName__contains=departure)
-        # for i in flights:
-        #     print("NICE "+str(flights.DepartureAirportID))
     if request.GET.get("arrivalAirport"):
         arrival = request.GET.get("arrivalAirport")
         flights = flights.filter(ArrivalAirportID__AirportName__contains=arrival)
     if request.GET.get("departureDate"):
-        print("niceONE\n")
         reqDate = request.GET.get("departureDate")
         reqParsed = parser.parse(reqDate)
         #print(dateti.month)
@@ -33,53 +32,68 @@ def flights(request):
         for flight in flights:
             availible = flight.AvailibleSeats
             print(flight.AvailibleSeats)
-            
             if availible < reqNumber:
-                print("YES")
                 flights = flights.exclude(pk=flight.pk)
         print(flights)
     
     serializer = flightsSerial(flights, many=True)
-    return JsonResponse(serializer.data,safe=False)
+    return Response(serializer.data)
 
+@api_view(["GET"])
 def options(request,flightId):
     flightSeats = Seats.objects.filter(FlightID=flightId,SeatStatus="A")
     serializer = seatFareSearial(flightSeats,many=True)
-    return JsonResponse(serializer.data,safe=False)
-
-def hold(request,flightID):
-    print("NO")
-
-# def flights(request):
-    # print(arrivalAirport)
-    # http_bad_response = HttpResponseBadRequest()
-    # http_bad_response["Content-Type"]= "text/plain"
-    # # paramArrival = arrivalAirport
-    # # print("AARRRIIVAL "+str(paramArrival))
-    # if(request.method!="GET"):
-    #     http_bad_response.content = "Only GET requests are allowed\n"
-    #     return http_bad_response
+    return Response(serializer.data)
     
-    # flightList = Flights.objects.all()
-    # the_list=[]
-    # #seatList = Seats.objects.all()
-    # for record in flightList:
-    #     depTime = record.DepartureDateTime
-    #     arrTime =record.ArrivalDateTime
-    #     filterSeatList = Seats.objects.filter(FlightID=record.pk)
-    #     item = {"departureAirport": record.DepartureAirportID.AirportName,
-    #             "arrivalAirport": record.DestinationAirportID.AirportName,
-    #             "departureDateTime": depTime.strftime("%Y-%m-%dT%H:%M:%S"),
-    #             "arrivalDateTime": arrTime.strftime("%Y-%m-%dT%H:%M:%S"),
-    #             "durationMins": (arrTime-depTime).total_seconds(),
-    #             "minPrice": "{:.2f}".format(float(filterSeatList.order_by("SeatPrice")[0].SeatPrice)),
-    #             "availableSeats": len(filterSeatList),
-    #             "currency":"Sterling (GBP - £)"}
-    #     the_list.append(item)
-    # #payload = {"flight": the_list}
-    # http_response = HttpResponse(json.dumps(the_list))
-    # http_response["Content-Type"]= "application/json"
-    # http_response.status_code = 200
-    # http_response.reason_phrase = "OK"
+@api_view(["GET"])
+def hold(request,flightId):
+    http_bad_response = HttpResponseBadRequest()
+    http_bad_response["Content-Type"]= "text/plain"
+    if request.GET.get("numPassengers"):
+        numPassengers = int(request.GET.get("numPassengers"))
+    else:
+        http_bad_response.reason_phrase= "numPassengers not specified"
+        return http_bad_response
+    if request.GET.get("seatClassId"):
+        seatClassId = int(request.GET.get("seatClassId"))
+    else:
+        http_bad_response.reason_phrase = "seatClassId not specified"
+        return http_bad_response
+    
+    flightSeats = Seats.objects.filter(FlightID=flightId,SeatStatus="A",ClassID=seatClassId)
+    if numPassengers > flightSeats.count():
+        failed = JsonResponse({"holdSuccessful":False})
+        failed.reason_phrase = "Not enough seats in this class"
+        failed.status_code = 404
+        return failed
+    else:
+        reservation = Reservations.objects.create(ReservationDate=datetime.now())
+        for seat in flightSeats[:numPassengers]:
+            seat.updateSeatStatus(status=seat.HOLD)
+            seat.ReservationID = reservation
+            seat.save()
+            print(seat)
+        return Response({"holdSuccessful":True,"holdId":reservation.pk})
+    
+@api_view(["POST"])    
+def booking(request):
+    data = request.data
+    #passnger = passengersSearial(data["passengerDetails"][0])
+    #print(passnger)
+    print(request.data["passengerDetails"][0]["title"])
+    # if "flightDetails" in request.POST:
+    #     print("NICE")
+    # if request.POST.get("passengerDetails"):
+    #     passengerDetails = request.POST.get("passengerDetails")
+    #     print("GOOD\n")
+    #     print(passengerDetails[0])
+    # if request.GET.get("flightDetails"):
+    #     flightDetails = request.GET.get("flightDetails")
+    #     print("GOODNUMVER2\n")
+    #     print(flightDetails)
+    # if request.GET.get("seatClassId"):
+    #     seatClassId = request.GET.get("seatClassId")
+    #     print("GOODNUMVER2\n")
+    #     print(seatClassId   )
+    return Response({"NICE":True})
 
-    # return http_response

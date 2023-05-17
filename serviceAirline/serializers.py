@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Flights,Seats
+from .models import Flights,Seats,Passengers
 
 
 
@@ -24,3 +24,22 @@ class seatFareSearial(serializers.ModelSerializer):
     class Meta:
         model = Seats
         fields =  ["seatClassId","className","price"]
+
+
+class passengersSearial(serializers.ModelSerializer):
+    title = serializers.CharField(required=True, allow_blank=False, max_length=8)
+
+    class Meta:
+        model = Passengers
+        fields = ["title"]
+
+
+
+
+# class Passengers(models.Model):
+#     Title = models.CharField(max_length=4,null=False)
+#     First_Name = models.CharField(max_length=30,null=False)
+#     Last_Name = models.CharField(max_length=30,null=False)
+#     BookingID = models.ForeignKey(Bookings,null=True,on_delete=models.SET_NULL)
+#     Seat = models.ForeignKey(Seats,on_delete=models.CASCADE)
+#     PassportNumber = models.IntegerField()

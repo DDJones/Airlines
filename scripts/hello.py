@@ -29,6 +29,7 @@ def make_small():
     firstClass = ["A","B","C","D","E"]
     businessClass =['F','G','H','I','J','K']
     timehours = [1,4,3]
+    airlines = ["Virgin","EasyJet","British Airways","United"]
 
     first = SeatClass.objects.create(Class="First Class")
     business = SeatClass.objects.create(Class="Business Class")
@@ -41,7 +42,7 @@ def make_small():
         ato = Airports.objects.create(AirportName = airport[i+3],CityID=cto)
         date = datetime.datetime(2023,8,1,12,4,5)
         arrdate = date+datetime.timedelta(hours=timehours[i])
-        flight = Flights.objects.create(DepartureAirportID = afrom,DestinationAirportID=ato,
+        flight = Flights.objects.create(Airline=random.choice(airlines),DepartureAirportID = afrom,DestinationAirportID=ato,
                                         DepartureDateTime =date,ArrivalDateTime=arrdate,Currency="GBP")
         for row in rowChar:
             for column in range (6):
